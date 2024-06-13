@@ -20,7 +20,11 @@ array(6) {
   float(3.14)
   ["imie"]=>
   string(11) "hello world"
-
+  ["array"]=>
+  array(1) {
+    ["nazwisko"]=>
+    string(3) "abc"
+  }
   ["null"]=>
   NULL
 }
@@ -29,7 +33,9 @@ array(6) {
 		>
 		<button onclick="handleClick()">Convert to PHP Array</button>
 		<button id="copyButton" onclick="handleCopy()">kopiuj</button>
-		<textarea id="outputTextarea" rows="13" cols="70" disabled></textarea>
+		<textarea id="outputTextarea" rows="13" cols="70" disabled>
+$arr = </textarea
+		>
 
 		<script src="app.js"></script>
 	</body>

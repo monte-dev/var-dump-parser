@@ -1,31 +1,28 @@
 function handleClick() {
 	const input = document.getElementById('inputTextarea').value;
-
-	// Directly decode HTML using innerHTML
-	const tempElement = document.createElement('textarea');
-	tempElement.innerHTML = input;
-	const inputString = tempElement.value;
+	const el = document.createElement('textarea');
+	el.innerHTML = input;
+	const inputString = el.value;
 
 	try {
 		const resultObject = convertStringToObject(inputString);
 		const resultObjectFormatted = removeDataType(resultObject);
 		const outputValue = convertToPhpArray(resultObjectFormatted);
-		document.getElementById('outputTextarea').value = outputValue;
+		document.getElementById('outputTextarea').value += outputValue;
 		document.getElementById('outputTextarea').disabled =
 			outputValue.length === 0 ? true : false;
 	} catch (error) {
-		console.log(error.message)
+		console.log(error.message);
 	}
 }
 
 function convertStringToObject(inputString) {
-	console.log(inputString)
-	inputString = inputString.replace(/"\s+/g, '"').trim()
-	if (inputString.endsWith('}') || inputString.endsWith('>')) {
-		inputString = inputString.slice(0, -1);
-	} else {
-		throw new Error('Niepoprawny format inputu, brak zamykającego } or >');
+	inputString = inputString.trim();
+
+	if (!(inputString.endsWith('}') || inputString.endsWith('>'))) {
+		throw new Error('Invalid input format, missing closing } or >');
 	}
+
 	const keyValuePairs = [];
 	let startIndex = inputString.indexOf('["');
 
@@ -36,15 +33,26 @@ function convertStringToObject(inputString) {
 		const key = inputString.slice(keyStartIndex, keyEndIndex);
 		let valueStartIndex = keyEndIndex + 4;
 		let valueEndIndex = inputString.indexOf('["', valueStartIndex);
-
 		if (valueEndIndex === -1) {
 			valueEndIndex = inputString.length;
 		}
 
 		let value = inputString.slice(valueStartIndex, valueEndIndex).trim();
+
+		if (value.includes('array(')) {
+			let arrayEndIndex = inputString.indexOf('}', valueStartIndex);
+			if (arrayEndIndex !== -1) {
+				value = inputString
+					.slice(valueStartIndex, arrayEndIndex + 1)
+					.trim();
+				valueEndIndex = arrayEndIndex + 1;
+			} else {
+				throw new Error('Invalid input format, unclosed array.');
+			}
+		}
+
 		keyValuePairs.push([key, value]);
 		startIndex = inputString.indexOf('["', valueEndIndex);
-		console.log(inputString.charAt(valueEndIndex));
 	}
 
 	const resultObject = {};
@@ -66,6 +74,7 @@ function removeDataType(objectToRemoveDataTypes) {
 		else if (value.startsWith('float(')) valueType = 'float';
 		else if (value.startsWith('int(')) valueType = 'int';
 		else if (value.startsWith('bool(')) valueType = 'bool';
+		else if (value.startsWith('array(')) valueType = 'array';
 		else if (value === 'NULL') valueType = 'NULL';
 
 		let modifiedValue;
@@ -100,6 +109,10 @@ function removeDataType(objectToRemoveDataTypes) {
 			case 'NULL':
 				modifiedValue = null;
 				break;
+			case 'array':
+				let nestedValue = convertStringToObject(value);
+				modifiedValue = removeDataType(nestedValue);
+				break;
 			default:
 				modifiedValue = value;
 				break;
@@ -107,17 +120,16 @@ function removeDataType(objectToRemoveDataTypes) {
 
 		modifiedObject[key] = modifiedValue;
 	}
-
 	return modifiedObject;
 }
 
 function convertToPhpArray(obj) {
-	let phpArray = '$arr = [\n';
+	console.log(obj);
+	let phpArray = '[\n';
 
 	for (const key in obj) {
 		if (obj.hasOwnProperty(key)) {
 			phpArray += `\t"${key}" => `;
-
 			switch (typeof obj[key]) {
 				case 'string':
 					phpArray += `"${obj[key]}"`;
@@ -128,6 +140,13 @@ function convertToPhpArray(obj) {
 				case 'number':
 					phpArray += `${obj[key]}`;
 					break;
+				case 'object':
+					if (Array.isArray(obj[key])) {
+						phpArray += `${convertToPhpArray(obj[key])}`;
+					} else {
+						phpArray += `${convertToPhpArray(obj[key])}`;
+					}
+					break;
 				default:
 					phpArray += 'NULL';
 			}
@@ -135,8 +154,9 @@ function convertToPhpArray(obj) {
 			phpArray += ',\n';
 		}
 	}
-
-	phpArray += '];';
+	if (!phpArray.endsWith('];')) {
+		phpArray += '];';
+	}
 
 	return phpArray;
 }
