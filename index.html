@@ -1,0 +1,36 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>var_dump do php array w js</title>
+	</head>
+	<body>
+		<textarea
+			id="inputTextarea"
+			rows="18"
+			cols="70"
+			placeholder="wklej zawartość var_dump"
+		>
+array(6) {
+  ["bool"]=>
+  bool(false)
+  ["int"]=>
+  int(12)
+  ["float"]=>
+  float(3.14)
+  ["imie"]=>
+  string(11) "hello world"
+
+  ["null"]=>
+  NULL
+}
+
+</textarea
+		>
+		<button onclick="handleClick()">Convert to PHP Array</button>
+		<button id="copyButton" onclick="handleCopy()">kopiuj</button>
+		<textarea id="outputTextarea" rows="13" cols="70" disabled></textarea>
+
+		<script src="app.js"></script>
+	</body>
+</html>
