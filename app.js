@@ -4,24 +4,18 @@ function handleClick() {
 	el.innerHTML = input;
 	const inputString = el.value;
 
-	try {
-		const resultObject = convertStringToObject(inputString);
-		const resultObjectFormatted = removeDataType(resultObject);
-		const outputValue = convertToPhpArray(resultObjectFormatted);
-		document.getElementById('outputTextarea').value += outputValue;
-		document.getElementById('outputTextarea').disabled =
-			outputValue.length === 0 ? true : false;
-	} catch (error) {
-		console.log(error.message);
-	}
+	const resultObject = convertStringToObject(inputString);
+	const resultObjectFormatted = removeDataType(resultObject);
+	const outputValue = convertToPhpArray(resultObjectFormatted);
+	document.getElementById('outputTextarea').value += outputValue;
+	document.getElementById('outputTextarea').disabled =
+		outputValue.length === 0 ? true : false;
 }
 
 function convertStringToObject(inputString) {
 	inputString = inputString.trim();
 
-	if (!(inputString.endsWith('}') || inputString.endsWith('>'))) {
-		throw new Error('Invalid input format, missing closing } or >');
-	}
+	const resultObject = {};
 
 	const keyValuePairs = [];
 	let startIndex = inputString.indexOf('["');
@@ -29,6 +23,10 @@ function convertStringToObject(inputString) {
 	while (startIndex !== -1) {
 		const keyStartIndex = startIndex + 2;
 		const keyEndIndex = inputString.indexOf('"]=>', keyStartIndex);
+
+		if (keyEndIndex === -1) {
+			throw new Error('Invalid input format, missing "]=>".');
+		}
 
 		const key = inputString.slice(keyStartIndex, keyEndIndex);
 		let valueStartIndex = keyEndIndex + 4;
@@ -38,10 +36,16 @@ function convertStringToObject(inputString) {
 		}
 
 		let value = inputString.slice(valueStartIndex, valueEndIndex).trim();
-
-		if (value.includes('array(')) {
-			let arrayEndIndex = inputString.indexOf('}', valueStartIndex);
+		if (value.startsWith('array(')) {
+			let arrayEndIndex = inputString.lastIndexOf('}');
 			if (arrayEndIndex !== -1) {
+				let secondToLastIndex = inputString.lastIndexOf(
+					'}',
+					arrayEndIndex - 1
+				);
+				if (secondToLastIndex !== -1) {
+					arrayEndIndex = secondToLastIndex;
+				}
 				value = inputString
 					.slice(valueStartIndex, arrayEndIndex + 1)
 					.trim();
@@ -50,17 +54,38 @@ function convertStringToObject(inputString) {
 				throw new Error('Invalid input format, unclosed array.');
 			}
 		}
-
 		keyValuePairs.push([key, value]);
 		startIndex = inputString.indexOf('["', valueEndIndex);
 	}
 
-	const resultObject = {};
-
 	keyValuePairs.forEach(([key, value]) => {
-		resultObject[key] = value;
-	});
+		try {
+			if (typeof value !== 'string') {
+				throw new Error(
+					`--- Value for key "${key}" is not a string. ---`
+				);
+			}
 
+			if (value.startsWith('array(')) {
+				value = value.replace(/^array\(\d+\) \{/, '');
+				const nestedObject = convertStringToObject(value);
+				resultObject[key] = nestedObject;
+			} else if (value.includes('string(')) {
+				const stringValue = value.substring(
+					value.indexOf('"') + 1,
+					value.lastIndexOf('"')
+				);
+				resultObject[key] = stringValue;
+			} else {
+				resultObject[key] = value;
+			}
+		} catch (error) {
+			console.error(
+				`--- Error @ "${key}" with value "${value}" ---`,
+				error
+			);
+		}
+	});
 	return resultObject;
 }
 
@@ -68,50 +93,43 @@ function removeDataType(objectToRemoveDataTypes) {
 	const modifiedObject = {};
 
 	for (const [key, value] of Object.entries(objectToRemoveDataTypes)) {
-		let valueType;
-
-		if (value.startsWith('string(')) valueType = 'string';
-		else if (value.startsWith('float(')) valueType = 'float';
-		else if (value.startsWith('int(')) valueType = 'int';
-		else if (value.startsWith('bool(')) valueType = 'bool';
-		else if (value.startsWith('array(')) valueType = 'array';
-		else if (value === 'NULL') valueType = 'NULL';
-
 		let modifiedValue;
 
-		switch (valueType) {
-			case 'string':
-				if (value.startsWith('string(')) {
-					modifiedValue = value.substring(value.indexOf('"') + 1);
-					const endIndex = modifiedValue.lastIndexOf('"');
-					if (endIndex !== -1) {
-						modifiedValue = modifiedValue.substring(0, endIndex);
-					}
-				} else {
-					modifiedValue = value;
+		switch (true) {
+			case typeof value === 'string' && value.startsWith('string('):
+				modifiedValue = value.substring(value.indexOf('"') + 1);
+				const endIndex = modifiedValue.lastIndexOf('"');
+				if (endIndex !== -1) {
+					modifiedValue = modifiedValue.substring(0, endIndex);
 				}
 				modifiedValue = modifiedValue.trim();
 				break;
-			case 'float':
-			case 'int':
-				const numericValue = value.substring(
+			case typeof value === 'string' && value.startsWith('float('):
+				const floatNumericValue = value.substring(
 					value.indexOf('(') + 1,
 					value.indexOf(')')
 				);
-				modifiedValue =
-					valueType === 'float'
-						? parseFloat(numericValue)
-						: parseInt(numericValue);
+				modifiedValue = parseFloat(floatNumericValue);
 				break;
-			case 'bool':
+			case typeof value === 'string' && value.startsWith('int('):
+				const intNumericValue = value.substring(
+					value.indexOf('(') + 1,
+					value.indexOf(')')
+				);
+				modifiedValue = parseInt(intNumericValue);
+				break;
+			case typeof value === 'string' && value.startsWith('bool('):
 				modifiedValue = value.includes('true');
 				break;
-			case 'NULL':
+			case typeof value === 'string' && value.startsWith('array('):
+				let nestedArrayValue = convertStringToObject(value);
+				modifiedValue = removeDataType(nestedArrayValue);
+				break;
+			case typeof value === 'string' && value.startsWith('NULL'):
 				modifiedValue = null;
 				break;
-			case 'array':
-				let nestedValue = convertStringToObject(value);
-				modifiedValue = removeDataType(nestedValue);
+			case typeof value === 'object' && !Array.isArray(value):
+				modifiedValue = removeDataType(value);
 				break;
 			default:
 				modifiedValue = value;
@@ -120,16 +138,22 @@ function removeDataType(objectToRemoveDataTypes) {
 
 		modifiedObject[key] = modifiedValue;
 	}
+
 	return modifiedObject;
 }
 
-function convertToPhpArray(obj) {
-	console.log(obj);
+var currentDepth = 0;
+
+function convertToPhpArray(obj, currentDepth = 0) {
 	let phpArray = '[\n';
+
+	currentDepth++;
 
 	for (const key in obj) {
 		if (obj.hasOwnProperty(key)) {
-			phpArray += `\t"${key}" => `;
+			phpArray += '\t'.repeat(currentDepth);
+
+			phpArray += `"${key}" => `;
 			switch (typeof obj[key]) {
 				case 'string':
 					phpArray += `"${obj[key]}"`;
@@ -141,10 +165,18 @@ function convertToPhpArray(obj) {
 					phpArray += `${obj[key]}`;
 					break;
 				case 'object':
-					if (Array.isArray(obj[key])) {
-						phpArray += `${convertToPhpArray(obj[key])}`;
+					if (obj[key] !== null && !Array.isArray(obj[key])) {
+						phpArray += `${convertToPhpArray(
+							obj[key],
+							currentDepth
+						)}`;
+					} else if (Array.isArray(obj[key])) {
+						phpArray += `${convertToPhpArray(
+							obj[key],
+							currentDepth
+						)}`;
 					} else {
-						phpArray += `${convertToPhpArray(obj[key])}`;
+						phpArray += 'NULL';
 					}
 					break;
 				default:
@@ -154,10 +186,14 @@ function convertToPhpArray(obj) {
 			phpArray += ',\n';
 		}
 	}
-	if (!phpArray.endsWith('];')) {
-		phpArray += '];';
-	}
 
+	currentDepth--;
+	phpArray += '\t'.repeat(currentDepth);
+	phpArray += ']';
+
+	if (currentDepth === 0) {
+		phpArray += ';';
+	}
 	return phpArray;
 }
 

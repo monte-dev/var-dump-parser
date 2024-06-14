@@ -2,14 +2,14 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>var_dump do php array w js</title>
+		<title>var_dump -> to php array converter</title>
 	</head>
 	<body>
 		<textarea
 			id="inputTextarea"
 			rows="18"
 			cols="70"
-			placeholder="wklej zawartość var_dump"
+			placeholder="insert va_dump"
 		>
 array(6) {
   ["bool"]=>
@@ -21,18 +21,32 @@ array(6) {
   ["imie"]=>
   string(11) "hello world"
   ["array"]=>
-  array(1) {
+  array(3) {
     ["nazwisko"]=>
     string(3) "abc"
+    ["2ndarr"]=>
+    array(3) {
+      ["a123"]=>
+      string(3) "222"
+      ["region"]=>
+      int(101)
+      ["3rdarray"]=>
+      array(1) {
+        ["insideof3rdarray"]=>
+        int(22)
+		
+      }
+    }
+    ["afterarrary"]=>
+    int(555)
   }
   ["null"]=>
   NULL
 }
-
 </textarea
 		>
 		<button onclick="handleClick()">Convert to PHP Array</button>
-		<button id="copyButton" onclick="handleCopy()">kopiuj</button>
+		<button id="copyButton" onclick="handleCopy()">copy</button>
 		<textarea id="outputTextarea" rows="13" cols="70" disabled>
 $arr = </textarea
 		>
