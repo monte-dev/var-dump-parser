@@ -1,0 +1,22 @@
+main {
+	width: 80vw;
+	padding: 1rem 2rem;
+	margin: 0 auto;
+}
+
+.input,
+.output {
+	width: 100%;
+	height: 300px;
+	border: 1px solid #440033;
+}
+
+textarea {
+	width: 100%;
+	height: 100%;
+}
+
+.buttons {
+	text-align: center;
+	padding: 1rem;
+}

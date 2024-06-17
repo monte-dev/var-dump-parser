@@ -2,55 +2,85 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"
+			integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"
+			integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/lint/css-lint.min.js"
+			integrity="sha512-uvP6cZWrrQc4b+sluLwMcjWPDC/2oJMGAmCGJYqYbC/uBR74PAd/GRZ4nMoTfczKoRZOHkUbwHHugQBYVQQM4A=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
 		<title>var_dump -> to php array converter</title>
 	</head>
 	<body>
-		<textarea
-			id="inputTextarea"
-			rows="18"
-			cols="70"
-			placeholder="insert va_dump"
-		>
-array(6) {
-  ["bool"]=>
-  bool(false)
-  ["int"]=>
-  int(12)
-  ["float"]=>
-  float(3.14)
-  ["imie"]=>
-  string(11) "hello world"
-  ["array"]=>
+		<main>
+			<div class="input">
+				<textarea id="inputTextarea" placeholder="insert va_dump">
+array(4) {
+  ["Key1"]=>
+  string(6) "Value1"
+  ["Key2"]=>
   array(3) {
-    ["nazwisko"]=>
-    string(3) "abc"
-    ["2ndarr"]=>
-    array(3) {
-      ["a123"]=>
-      string(3) "222"
-      ["region"]=>
-      int(101)
-      ["3rdarray"]=>
+    ["Key22"]=>
+    string(7) "Value22"
+    ["Key23"]=>
+    array(2) {
+      ["Key231"]=>
+      string(8) "Value231"
+      ["nestedarr"]=>
       array(1) {
-        ["insideof3rdarray"]=>
-        int(22)
-		
+        ["working"]=>
+        bool(true)
       }
     }
-    ["afterarrary"]=>
-    int(555)
+    ["arraybool"]=>
+    bool(false)
   }
-  ["null"]=>
-  NULL
+  ["age"]=>
+  int(43)
+  ["numeric"]=>
+  float(0.3)
 }
-</textarea
-		>
-		<button onclick="handleClick()">Convert to PHP Array</button>
-		<button id="copyButton" onclick="handleCopy()">copy</button>
-		<textarea id="outputTextarea" rows="13" cols="70" disabled>
-$arr = </textarea
-		>
+    </textarea
+				>
+			</div>
+			<div class="buttons">
+				<button onclick="handleClick()">Convert to PHP Array</button>
+				<button id="copyButton" onclick="handleCopy()">copy</button>
+				<button id="clearButton" onclick="handleClear()">
+					Clear Output
+				</button>
+			</div>
+			<div class="output">
+				<textarea id="outputTextarea" rows="13" disabled>
+$arr = 
+    </textarea
+				>
+			</div>
+		</main>
 
+		<script>
+			var editor = CodeMirror.fromTextArea(
+				document.getElementById('inputTextarea'),
+
+				{
+					lineWrapping: true,
+					lineNumbers: true,
+				}
+			);
+		</script>
 		<script src="app.js"></script>
 	</body>
 </html>

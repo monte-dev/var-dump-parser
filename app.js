@@ -1,5 +1,5 @@
 function handleClick() {
-	const input = document.getElementById('inputTextarea').value;
+	const input = editor.getValue();
 	const el = document.createElement('textarea');
 	el.innerHTML = input;
 	const inputString = el.value;
@@ -213,4 +213,9 @@ function handleCopy() {
 	} else {
 		alert('No data to copy');
 	}
+}
+
+function handleClear() {
+	document.getElementById('outputTextarea').value = '';
+	document.getElementById('outputTextarea').disabled = true;
 }
