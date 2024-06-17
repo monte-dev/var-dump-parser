@@ -151,7 +151,7 @@ function convertToPhpArray(obj, currentDepth = 0) {
 
 	for (const key in obj) {
 		if (obj.hasOwnProperty(key)) {
-			phpArray += '\t'.repeat(currentDepth);
+            phpArray += ' '.repeat(currentDepth * 4);
 
 			phpArray += `"${key}" => `;
 			switch (typeof obj[key]) {
@@ -188,7 +188,7 @@ function convertToPhpArray(obj, currentDepth = 0) {
 	}
 
 	currentDepth--;
-	phpArray += '\t'.repeat(currentDepth);
+    phpArray += ' '.repeat(currentDepth * 4);
 	phpArray += ']';
 
 	if (currentDepth === 0) {
